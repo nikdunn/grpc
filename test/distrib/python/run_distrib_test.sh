@@ -27,7 +27,7 @@ TOOLS_BDIST_ARCHIVES=("$EXTERNAL_GIT_ROOT"/input_artifacts/grpcio_tools-*.whl)
 
 function make_virtualenv() {
   virtualenv "$1"
-  "$1/bin/python" -m pip install --upgrade six pip
+  "$1/bin/python" -m pip install --upgrade six pip==9.0.2
   "$1/bin/python" -m pip install cython
 }
 
