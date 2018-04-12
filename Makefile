@@ -79,6 +79,9 @@ endif
 endif
 endif
 
+DEFAULT_CC = clang
+DEFAULT_CXX = clang++
+V=1
 
 BINDIR = $(BUILDDIR_ABSOLUTE)/bins
 OBJDIR = $(BUILDDIR_ABSOLUTE)/objs
@@ -301,6 +304,9 @@ endif
 CXX11_CHECK_CMD = $(CXX) -std=c++11 -o $(TMPOUT) -c test/build/c++11.cc
 HAS_CXX11 = $(shell $(CXX11_CHECK_CMD) 2> /dev/null && echo true || echo false)
 
+CXX14_CHECK_CMD = $(CXX) -std=c++14 -o $(TMPOUT) -c test/build/c++11.cc
+HAS_CXX14 = $(shell $(CXX14_CHECK_CMD) 2> /dev/null && echo true || echo false)
+
 CHECK_SHADOW_WORKS_CMD = $(CC) -std=c99 -Werror -Wshadow -o $(TMPOUT) -c test/build/shadow.c
 HAS_WORKING_SHADOW = $(shell $(CHECK_SHADOW_WORKS_CMD) 2> /dev/null && echo true || echo false)
 ifeq ($(HAS_WORKING_SHADOW),true)
@@ -331,10 +337,14 @@ HOST_LD ?= $(LD)
 HOST_LDXX ?= $(LDXX)
 
 CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
+ifeq ($(HAS_CXX14),true)
+CXXFLAGS += -std=c++14
+else
 ifeq ($(HAS_CXX11),true)
 CXXFLAGS += -std=c++11
 else
 CXXFLAGS += -std=c++0x
+endif
 endif
 CPPFLAGS += -g -Wall -Wextra -Werror -Wno-long-long -Wno-unused-parameter -DOSATOMIC_USE_INLINED=1
 LDFLAGS += -g
@@ -351,8 +361,10 @@ CPPFLAGS += -fPIC
 LDFLAGS += -fPIC
 endif
 
+CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0 -nostdinc -I ~/UnrealEngine/Engine/Source/ThirdParty/Linux/LibCxx/include/c++/v1 -I /usr/local/include -I /usr/lib/llvm-3.8/bin/../lib/clang/3.8.0/include -I /usr/include/x86_64-linux-gnu -I /usr/include
+
 INCLUDES = . include $(GENDIR)
-LDFLAGS += -Llibs/$(CONFIG)
+LDFLAGS += -Llibs/$(CONFIG) -L~/UnrealEngine/Engine/Source/ThirdParty/Linux/LibCxx/lib/Linux/x86_64-unknown-linux-gnu
 
 ifeq ($(SYSTEM),Darwin)
 ifneq ($(wildcard /usr/local/ssl/include),)
@@ -385,6 +397,8 @@ ifeq ($(SYSTEM),MINGW32)
 LIBS = m pthread ws2_32
 LDFLAGS += -pthread
 endif
+
+LIBS += c++ c++abi
 
 #
 # The steps for cross-compiling are as follows:
