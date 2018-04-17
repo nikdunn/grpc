@@ -64,6 +64,9 @@ endif
 endif
 endif
 
+DEFAULT_CC = clang
+DEFAULT_CXX = clang++
+V=1
 
 BINDIR = $(BUILDDIR_ABSOLUTE)/bins
 OBJDIR = $(BUILDDIR_ABSOLUTE)/objs
@@ -323,7 +326,7 @@ HOST_LD ?= $(LD)
 HOST_LDXX ?= $(LDXX)
 
 CFLAGS += -std=c99 -Wsign-conversion -Wconversion $(W_SHADOW) $(W_EXTRA_SEMI)
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++14
 ifeq ($(SYSTEM),Darwin)
 CXXFLAGS += -stdlib=libc++
 endif
@@ -342,8 +345,10 @@ CPPFLAGS += -fPIC
 LDFLAGS += -fPIC
 endif
 
+CXXFLAGS += -D_GLIBCXX_USE_CXX11_ABI=0 -nostdinc -I $$HOME/UnrealEngine/Engine/Source/ThirdParty/Linux/LibCxx/include/c++/v1 -I /usr/local/include -I /usr/lib/llvm-3.8/bin/../lib/clang/3.8.0/include -I /usr/include/x86_64-linux-gnu -I /usr/include
+
 INCLUDES = . include $(GENDIR)
-LDFLAGS += -Llibs/$(CONFIG)
+LDFLAGS += -Llibs/$(CONFIG) -L$$HOME/UnrealEngine/Engine/Source/ThirdParty/Linux/LibCxx/lib/Linux/x86_64-unknown-linux-gnu
 
 ifeq ($(SYSTEM),Darwin)
 ifneq ($(wildcard /usr/local/ssl/include),)
@@ -376,6 +381,8 @@ ifeq ($(SYSTEM),MINGW32)
 LIBS = m pthread ws2_32
 LDFLAGS += -pthread
 endif
+
+LIBS += c++ c++abi
 
 #
 # The steps for cross-compiling are as follows:
@@ -1287,11 +1294,11 @@ run_dep_checks:
 
 third_party/protobuf/configure:
 	$(E) "[AUTOGEN] Preparing protobuf"
-	$(Q)(cd third_party/protobuf ; autoreconf -f -i -Wall,no-obsolete)
+	$(Q)(cd third_party/protobuf ; autoreconf -f -i -Wall,no-obsolete )
 
 $(LIBDIR)/$(CONFIG)/protobuf/libprotobuf.a: third_party/protobuf/configure
 	$(E) "[MAKE]    Building protobuf"
-	$(Q)(cd third_party/protobuf ; CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS_$(CONFIG)) -g $(PROTOBUF_LDFLAGS_EXTRA)" CPPFLAGS="$(PIC_CPPFLAGS) $(CPPFLAGS_$(CONFIG)) -g $(PROTOBUF_CPPFLAGS_EXTRA)" ./configure --disable-shared --enable-static $(PROTOBUF_CONFIG_OPTS))
+	$(Q)(cd third_party/protobuf ; CC="$(CC)" CXX="$(CXX)" LDFLAGS="$(LDFLAGS_$(CONFIG)) -g $(PROTOBUF_LDFLAGS_EXTRA)" CPPFLAGS="$(PIC_CPPFLAGS) $(CPPFLAGS_$(CONFIG)) -g $(PROTOBUF_CPPFLAGS_EXTRA)" ./makehack)
 	$(Q)$(MAKE) -C third_party/protobuf clean
 	$(Q)$(MAKE) -C third_party/protobuf
 	$(Q)mkdir -p $(LIBDIR)/$(CONFIG)/protobuf
